@@ -4,9 +4,17 @@ class UI {
     this.promptEl = document.querySelector("#prompt");
     this.containerEl = document.querySelector(".container");
   }
-  showUnderscores(word) {
+  showUnderscores(word, gameDiv) {
     const div = document.createElement("div");
     div.className = "word-container";
+
+    const categoryDiv = document.createElement("div");
+    categoryDiv.className = "category";
+    categoryDiv.innerHTML = `
+      <h2 id="category">Category: ${category}</h2>
+    `;
+
+    gameDiv.appendChild(categoryDiv);
 
     let html = "";
     for (let i = 0; i < word.length; i++) {
@@ -15,7 +23,24 @@ class UI {
       `;
     }
     div.innerHTML = html;
-    this.containerEl.appendChild(div);
+    gameDiv.appendChild(div);
+    gameDiv.appendChild(document.createElement("br"));
+  }
+
+  initGame(word) {
+    //create game container
+    const gameDiv = document.createElement("div");
+    gameDiv.className = "game-container";
+
+    //show word
+    ui.showUnderscores(word, gameDiv);
+
+    //show user input
+    ui.showInputLetters(gameDiv);
+
+    //insert before playGame Button
+    this.playGameEl.insertAdjacentElement("beforebegin", gameDiv);
+    this.togglePlayGame("hide");
   }
 
   changeGuessState(button, state) {
@@ -32,6 +57,14 @@ class UI {
     }
   }
 
+  togglePlayGame(status) {
+    if (status === "show") {
+      this.playGameEl.style = "display: visible";
+    } else {
+      this.playGameEl.style = "display: none";
+    }
+  }
+
   gameOver(won, message) {
     const div = document.createElement("div");
     if (won) {
@@ -42,12 +75,14 @@ class UI {
     div.appendChild(document.createTextNode(message));
 
     document
-      .querySelector(".word-container")
+      .querySelector(".category")
       .insertAdjacentElement("beforebegin", div);
 
+    this.togglePlayGame("show");
     setTimeout(() => {
       div.remove();
-    }, 3000);
+      document.querySelector(".game-container").remove();
+    }, 5000);
   }
   reveal(letter) {
     const letterDivs = document.querySelectorAll(`.letter-${letter}`);
@@ -56,7 +91,7 @@ class UI {
     });
   }
 
-  showInputLetters() {
+  showInputLetters(gameDiv) {
     const a = 65;
     const z = 65 + 25;
 
@@ -75,7 +110,7 @@ class UI {
       div.appendChild(button);
     }
 
-    this.containerEl.appendChild(div);
+    gameDiv.appendChild(div);
   }
 }
 
@@ -95,7 +130,10 @@ function guess(e) {
         ui.changeGuessState(e.target, "correct");
         correctGuesses++;
         if (correctGuesses === word.length) {
-          ui.gameOver(true, `Game Over, You Win with ${numGuesses} left!`);
+          ui.gameOver(
+            true,
+            `Game Over, You Win with ${numGuesses} guesses left!`
+          );
         }
       } else {
         ui.changeGuessState(e.target, "guessed");
@@ -111,6 +149,7 @@ function guess(e) {
 
 const words = ["truck", "airplane", "basketball", "pizza"];
 let numGuesses;
+let category;
 let correctGuesses;
 const ui = new UI();
 
@@ -119,18 +158,14 @@ ui.playGameEl.addEventListener("click", startNewGame);
 function startNewGame(e) {
   //hide new gae button
   ui.playGameEl.style = "display: none";
-  ui.promptEl.textContent = "Category: Things";
 
   //get word
   word = words[Math.floor(Math.random() * words.length)].toUpperCase();
+  category = "Things";
 
   numGuesses = 6;
   correctGuesses = 0;
   console.log(word);
 
-  //show word
-  ui.showUnderscores(word);
-
-  //show user input
-  ui.showInputLetters();
+  ui.initGame(word);
 }
